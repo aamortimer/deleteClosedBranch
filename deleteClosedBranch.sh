@@ -12,10 +12,10 @@ fi
 while getopts ":u:p:" opt; do
     case $opt in
         u)
-            # Jira and SVN Username
+            # Jira Username
             USERNAME=$OPTARG ;;
         p)
-            # Jira and SVN Password
+            # Jira Password
             PASSWORD=$OPTARG ;;
         \?)
             echo "Invalid option: -$OPTARG" >&2
