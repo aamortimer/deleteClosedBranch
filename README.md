@@ -1,6 +1,8 @@
 # Delete any closed branches
 
 ## Instalation
+The script depends on jshon for reading the JSON response from JIRA
+
 ```bash
 npm install jshon -g
 
