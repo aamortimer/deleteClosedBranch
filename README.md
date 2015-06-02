@@ -10,4 +10,6 @@ chomd +x .deleteClosedBranch.sh
 ## Runing the code
 Call deleteClosedBranch.sh passing in your Jira username and password as shown below, you will then be prompted to delete and close branches the code finds.
 
+```bash
 deleteClosedBranch.sh -u [username] -p [password]
+```
