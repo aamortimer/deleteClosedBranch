@@ -28,10 +28,15 @@ while getopts ":u:p:" opt; do
     esac
 done
 
-for BRANCH in $(git branch | xargs -n1 basename); do
-    TICKET=$(curl -s -u $USERNAME:$PASSWORD -H "Content-Type: application/json"  https://tuispecialist.atlassian.net/rest/api/2/issue/$BRANCH) 
-    ERROR_MESSAGE=$(jshon -Q -e errorMessages -u  <<< $TICKET)
 
+## need to removed folder from branch
+for BRANCH in $(git branch | grep -v "\*" | xargs -n 1); do
+    JIRA_BRANCH=$(sed "s/.*\///g" <<< $BRANCH)
+
+    TICKET=$(curl -s -u $USERNAME:$PASSWORD -H "Content-Type: application/json" https://tuispecialist.atlassian.net/rest/api/2/issue/$JIRA_BRANCH)
+ 
+    ERROR_MESSAGE=$(jshon -Q -e errorMessages -u  <<< $TICKET)
+    
     if [ "$ERROR_MESSAGE" != 'Issue Does Not Exist' ]; then
         TICKET_STATUS=$(jshon -Q -e fields -e status -e name -u <<< $TICKET)
         TICKET_SUMMARY=$(jshon -Q -e fields -e summary -u <<< $TICKET)
@@ -41,9 +46,11 @@ for BRANCH in $(git branch | xargs -n1 basename); do
 
             read -p $'\e[31mDelete branch?\e[0m: (y/n)' CONT
             if [ "$CONT" == "y" ]; then
-              git branch -rd "$BRANCH"
+             # git branch -rd "origin/$GIT_BRANCH"
+             # git fetch -p
               echo "DELETED Branch $BRANCH\n";
             fi
         fi
+
     fi
 done
