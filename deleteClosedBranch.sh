@@ -1,5 +1,4 @@
 #!/bin/bash
-
 if (($# == 0)); then
     echo ""
     echo "Available flags:"
@@ -28,27 +27,37 @@ while getopts ":u:p:" opt; do
     esac
 done
 
+printf "\e[34m###########################################################################################\e[00m"
+printf "\n\t\e[01mRunning checks on git branches, please be patient this could take some time.\e[00m\n"
+printf "\e[34m###########################################################################################\e[00m\n\n"
 
 ## need to removed folder from branch
-for BRANCH in $(git branch | grep -v "\*" | xargs -n 1); do
+for BRANCH in $(git branch -a | grep -v "\*" | xargs -n 1); do
     JIRA_BRANCH=$(sed "s/.*\///g" <<< $BRANCH)
 
     TICKET=$(curl -s -u $USERNAME:$PASSWORD -H "Content-Type: application/json" https://tuispecialist.atlassian.net/rest/api/2/issue/$JIRA_BRANCH)
- 
-    ERROR_MESSAGE=$(jshon -Q -e errorMessages -u  <<< $TICKET)
-    
+
+    ERROR_MESSAGE=$(jshon -Q -e errorMessages -e 0 -u  <<< $TICKET)
+
     if [ "$ERROR_MESSAGE" != 'Issue Does Not Exist' ]; then
         TICKET_STATUS=$(jshon -Q -e fields -e status -e name -u <<< $TICKET)
         TICKET_SUMMARY=$(jshon -Q -e fields -e summary -u <<< $TICKET)
 
-        if [ "$TICKET_STATUS" == 'Closed' ] ; then
-            printf "$BRANCH $TICKET_SUMMARY \e[00;32m[CLOSED]\e[00m\n"
+        printf "Found ticket \e[01m$JIRA_BRANCH\e[00m with the following status \e[00;36m[$TICKET_STATUS]\e[00m\n"
 
-            read -p $'\e[31mDelete branch?\e[0m: (y/n)' CONT
+        if [ "$TICKET_STATUS" == 'Closed' ] || [ "$TICKET_STATUS" == "In Live Environment" ] ; then
+            printf "\n\n\e[34m\e[01mDo you want to delete\e[0m:"
+            printf "\n\e[01m$BRANCH $TICKET_SUMMARY \e[00;36m[$TICKET_STATUS]\e[00m\n"
+
+            echo "The following commands will be run, please make sure you confirm you really want to delete these."
+            printf "\n\e[00;31mgit branch -D '$BRANCH'\e[00m";
+            printf "\n\e[00;31mgit push origin :$BRANCH\e[00m";
+            read -p $'\n\e[34mDelete branch?\e[0m: (y/n) ' CONT
+
             if [ "$CONT" == "y" ]; then
-             # git branch -rd "origin/$GIT_BRANCH"
-             # git fetch -p
-              echo "DELETED Branch $BRANCH\n";
+              git branch -D $BRANCH > /dev/null 2>&1
+              git push origin :BRANCH > /dev/null 2>&1
+              printf "\e[32mDELETED Branch \e[01m$BRANCH\e[00m\n\n";
             fi
         fi
 
