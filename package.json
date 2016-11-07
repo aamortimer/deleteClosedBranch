@@ -1,0 +1,24 @@
+{
+  "name": "git-old-jira-branches",
+  "version": "1.0.0",
+  "description": "Finds all merged or closed Jira tickets then offers you the choice to delete them.",
+  "bin": {
+    "git-old-jira-branches": "deleteClosedBranch.sh"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\"s && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aamortimer/deleteClosedBranch.git"
+  },
+  "author": "Andy Mortimer <aamortimer@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/aamortimer/deleteClosedBranch/issues"
+  },
+  "homepage": "https://github.com/aamortimer/deleteClosedBranch#readme",
+  "dependencies": {
+    "jshon": "0.0.20121031"
+  }
+}

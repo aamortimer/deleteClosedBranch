@@ -63,3 +63,5 @@ for BRANCH in $(git branch -a | grep -v "\*" | xargs -n 1); do
 
     fi
 done
+
+printf "\e[01mFinished.\e[00m\n"
