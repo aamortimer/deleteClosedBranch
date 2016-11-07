@@ -1,14 +1,10 @@
 #!/bin/bash
-if (($# == 0)); then
-    echo ""
-    echo "Available flags:"
-    echo "-u jira user"
-    echo "-p jira password"
-    echo ""
-    exit 1
-fi
 
-while getopts ":u:p:" opt; do
+USERNAME="$(git config jira.username)"
+PASSWORD="$(git config jira.password)"
+API="$(git config jira.api)"
+
+while getopts ":u:p:a:" opt; do
     case $opt in
         u)
             # Jira Username
@@ -16,16 +12,25 @@ while getopts ":u:p:" opt; do
         p)
             # Jira Password
             PASSWORD=$OPTARG ;;
-        \?)
-            echo "Invalid option: -$OPTARG" >&2
-            exit 1
-            ;;
-        :)
-            echo "Option -$OPTARG requires an argument." >&2
-            exit 1
-            ;;
+        a)
+            # Jira API
+            API=$OPTARG ;;
     esac
 done
+
+if [ -z $USERNAME ] || [ -z $PASSWORD ] || [ -z $API ]; then
+    printf "\n\e[31mYou must supply a 'Username', 'Password' AND 'API'.\n"
+    printf "You can supply these by setting 'git congig' settings or pass them in as command line arguments.\e[00m\n\n"
+    printf "To setup git config settings run the following commands.\n\n"
+    printf "\e[32m\tgit config jira.username [username]\n"
+    printf "\tgit config jira.password [password]\n"
+    printf "\tgit config jira.api [api]\n\n"
+    printf "\e[00mOr you can pass these options in as arguments with the following\n"
+    printf "\e[32m\tgit-old-jira-branches -u [username] -p [password] -a [api]\n\e[00m\n"
+
+    exit 1;
+fi
+
 
 printf "\e[34m###########################################################################################\e[00m"
 printf "\n\t\e[01mRunning checks on git branches, please be patient this could take some time.\e[00m\n"
@@ -35,7 +40,7 @@ printf "\e[34m##################################################################
 for BRANCH in $(git branch -a | grep -v "\*" | xargs -n 1); do
     JIRA_BRANCH=$(sed "s/.*\///g" <<< $BRANCH)
 
-    TICKET=$(curl -s -u $USERNAME:$PASSWORD -H "Content-Type: application/json" https://tuispecialist.atlassian.net/rest/api/2/issue/$JIRA_BRANCH)
+    TICKET=$(curl -s -u $USERNAME:$PASSWORD -H "Content-Type: application/json" https://$API/rest/api/2/issue/$JIRA_BRANCH)
 
     ERROR_MESSAGE=$(jshon -Q -e errorMessages -e 0 -u  <<< $TICKET)
 
