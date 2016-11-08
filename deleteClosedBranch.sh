@@ -1,17 +1,17 @@
 #!/bin/bash
 
-# libaries
-JSHON="$(npm bin)/jshon"
+# libary
+JSHON="/usr/local/lib/node_modules/git-old-jira-branches/node_modules/jshon/jshon"
 
-# settings
+# # settings
 USERNAME="$(git config jira.username)"
 PASSWORD="$(git config jira.password)"
 HOST="$(git config jira.host)"
 
-# type
+# # type
 BOLD="\e[01m"
 
-# colours
+# # colours
 RED="\e[31m"
 GREEN="\e[32m"
 BLUE="\e[34m"
@@ -55,30 +55,31 @@ for BRANCH in $(git branch -a --merged master| grep -v "\*" | xargs -n 1); do
     JIRA_BRANCH=$(sed "s/.*\///g" <<< $BRANCH)
 
     TICKET=$(curl -s -u $USERNAME:$PASSWORD -H "Content-Type: application/json" https://$HOST/rest/api/2/issue/$JIRA_BRANCH)
+    ERROR_MESSAGE=""
 
-    if [ "$($JSHON -e errorMessages -t <<< $TICKET 2> /dev/null)" == "array" ]; then
+    if [ "$($JSHON -e errorMessages -t 2> /dev/null <<< $TICKET)" == "array" ]; then
         ERROR_MESSAGE=$($JSHON -Q -e errorMessages -e 0 -u  <<< $TICKET)
+    fi
 
-        if [ "$ERROR_MESSAGE" != 'Issue Does Not Exist' ]; then
-            TICKET_STATUS=$(jshon -Q -e fields -e status -e name -u <<< $TICKET)
-            TICKET_SUMMARY=$(jshon -Q -e fields -e summary -u <<< $TICKET)
+    if [ "$ERROR_MESSAGE" != 'Issue Does Not Exist' ]; then
+        TICKET_STATUS=$($JSHON -Q -e fields -e status -e name -u <<< $TICKET)
+        TICKET_SUMMARY=$($JSHON -Q -e fields -e summary -u <<< $TICKET)
 
-            printf "Found ticket ${BOLD}$JIRA_BRANCH${RESET} with the following status ${BOLD}[$TICKET_STATUS]${RESET}\n"
+        printf "Found ticket ${BOLD}$JIRA_BRANCH${RESET} with the following status ${BOLD}[$TICKET_STATUS]${RESET}\n"
 
-            if [ "$TICKET_STATUS" == 'Closed' ] || [ "$TICKET_STATUS" == "In Live Environment" ] ; then
-                printf "\n\n${BLUE}${BOLD}Do you want to delete${RESET}:"
-                printf "\n${BOLD}$BRANCH $TICKET_SUMMARY [$TICKET_STATUS]${RESET}\n"
+        if [ "$TICKET_STATUS" == 'Closed' ] || [ "$TICKET_STATUS" == "In Live Environment" ] ; then
+            printf "\n\n${BLUE}${BOLD}Do you want to delete${RESET}:"
+            printf "\n${BOLD}$BRANCH $TICKET_SUMMARY [$TICKET_STATUS]${RESET}\n"
 
-                echo "The following commands will be run, please make sure you confirm you really want to delete these."
-                printf "\n${RED}git branch -D '$BRANCH'${RESET}";
-                printf "\n${RED}git push origin :$BRANCH${RESET}";
-                read -p $'\n${RED}Delete branch?${RESET}: (y/n) ' CONT
+            echo "The following commands will be run, please make sure you confirm you really want to delete these."
+            printf "\n${RED}git branch -D '$BRANCH'${RESET}";
+            printf "\n${RED}git push origin :$BRANCH${RESET}";
+            read -p $'\n${RED}Delete branch?${RESET}: (y/n) ' CONT
 
-                if [ "$CONT" == "y" ]; then
-                  git branch -D $BRANCH > /dev/null 2>&1
-                  git push origin :BRANCH > /dev/null 2>&1
-                  printf "${GREEN}DELETED Branch \e[01m$BRANCH${RESET}\n\n";
-                fi
+            if [ "$CONT" == "y" ]; then
+              git branch -D $BRANCH > /dev/null 2>&1
+              git push origin :BRANCH > /dev/null 2>&1
+              printf "${GREEN}DELETED Branch \e[01m$BRANCH${RESET}\n\n";
             fi
         fi
     fi
